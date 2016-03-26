@@ -1,0 +1,85 @@
+{% extends '__base__.html' %}
+
+{% block title %}Manage - {% endblock %}
+
+{% block content %}
+
+<div id="div-blogs">
+<table class="pure-table pure-table-horizontal">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Created at</th>
+      <th>Operation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr v-for="blog in blogs">
+      <td><a v-bind:href="'/blog/'+blog.id" v-text="blog.name"></td>
+      <td><a v-text="blog.created_at.toDateTime()"></td>
+      <td><a href="#" v-on:click="edit_blog(blog)">edit</a>&nbsp<a href="#" v-on:click="delete_blog(blog)">del</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<ul class="pure-paginator">
+    <div v-if="page.has_previous"><a class="pure-button prev" v-bind:class="{'pure-button-disabled':page.has_previous}" v-on:click="previous()">&#171;</a></div>
+    <span v-text="page.page_index"></span>
+    <div v-if="page.has_next"><a class="pure-button next" v-bind:class="{'pure-button-disabled':page.has_next}" v-on:click="next()">&#187;</a></div>
+</ul>
+</div>
+
+{% endblock %}
+
+
+{% block js %}
+
+  <script src="http://cdn.jsdelivr.net/vue/1.0.13/vue.min.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="/static/js/ymtx.js"></script>
+
+<script>
+
+function initVM(data) {
+    $('#div-blogs').show();
+    var vm = new Vue({
+        el: '#div-blogs',
+        data: {
+            blogs: data.blogs,
+            page: data.page
+        },
+        methods: {
+            previous: function () {
+                gotoPage(this.page.page_index - 1);
+            },
+            next: function () {
+                gotoPage(this.page.page_index + 1);
+            },
+            edit_blog: function (blog) {
+                location.assign('/manage/blogs/edit/' + blog.id);
+            },
+            delete_blog: function (blog) {
+                postApi('/api/blogs/' + blog.id + '/delete', {}, function (err, r) {
+                    if (err) {
+                        return showError(err);
+                    }
+                    location.reload();
+                });
+            }
+        }
+    });
+}
+
+$(function() {
+    getApi('/api/blogs?page={{ page_index }}', function (err, results) {
+        if (err) {
+            return showError(err);
+        }
+        $('#div-loading').hide();
+        initVM(results);
+    });
+});
+
+</script>
+
+{% endblock %}

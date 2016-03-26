@@ -1,0 +1,90 @@
+{% extends '__base__.html' %}
+
+{% block title %}Manage - {% endblock %}
+
+{% block content %}
+
+<div>
+  <form class="pure-form pure-form-stacked" id="form-blog" v-on:submit="submit">
+  <div class="uk-alert uk-alert-danger uk-hidden"></div>
+  <fieldset>
+    <input type="text"  placeholder="name" v-model="name">
+    <textarea placeholder="content" v-model="content"></textarea>
+    <button type="submit" class="pure-button pure-button-primary">Submit</button>
+  </fieldset>
+  </form>
+</div>
+
+{% endblock %}
+
+
+{% block js %}
+
+  <script src="http://cdn.jsdelivr.net/vue/1.0.13/vue.min.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="/static/js/ymtx.js"></script>
+
+  <script>
+
+
+
+var
+    action = '{{ action }}',
+    redirect = '{{ redirect }}';
+
+function initVue(blog) {
+    var vm = new Vue({
+        el: '#form-blog',
+        data: blog,
+        methods: {
+            submit: function (event) {
+                event.preventDefault();
+                startLoading();
+                postApi(action, this.$data, function (err, r) {
+                    if (err) {
+                        showError(err);
+                    }
+                    else {
+                        return location.assign(redirect);
+                    }
+                    stopLoading();
+                });
+            },
+            cancel: function() {
+                location.assign(redirect);
+            }
+        }
+    });
+}
+
+
+// {% if id %}
+
+$(function () {
+    startLoading();
+    getApi('/api/blogs/{{ id }}', function (err, blog) {
+        if (err) {
+            showError(err);
+        }
+        else {
+            stopLoading();
+            initVue(blog);
+        }
+    });
+});
+
+// {% else %}
+
+$(function () {
+    initVue({
+        name: '',
+        content: ''
+    });
+});
+
+// {% endif %}
+
+
+
+  </script>
+{% endblock %}

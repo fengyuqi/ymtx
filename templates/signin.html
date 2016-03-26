@@ -1,0 +1,62 @@
+{% extends '__base__.html' %}
+
+{% block title %}Signin - {% endblock %}
+
+{% block content %}
+  <div class="uk-alert uk-alert-danger uk-hidden"></div>
+  <form class="pure-form pure-form-stacked" id="form-signin" v-on:submit="submit" >
+  <fieldset>
+    <input type="email" placeholder="Email" v-model="email">
+    <input type="password" placeholder="Password" v-model="password">
+
+    <label for="remember"> <input id="remember" type="checkbox" v-model="remember">Remember me</label>
+
+    <button type="submit" class="pure-button pure-button-primary" >Sign in</button>
+  </fieldset>
+  </form>
+{% endblock %}
+
+
+{% block js %}
+  <script src="http://cdn.jsdelivr.net/vue/1.0.13/vue.min.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="/static/js/md5.js"></script>
+  <script src="/static/js/ymtx.js"></script>
+
+  <script>
+
+$(function() {
+    var vm = new Vue({
+        el: '#form-signin',
+        data: {
+            email: '',
+            password: '',
+            remember: false
+        },
+        methods: {
+            submit: function (event) {
+                event.preventDefault();
+                var email = this.email.trim().toLowerCase();
+                showError();
+                startLoading();
+                postApi('/api/authenticate', {
+                    email: email,
+                    password: CryptoJS.MD5(this.password).toString(),
+                    remember: this.remember
+                }, function (err, result) {
+                    if (err) {
+                        showError(err);
+                    }
+                    else {
+                        return location.assign(result.admin ? '/manage/' : '/');
+                    }
+                    stopLoading();
+                });
+            }
+        }
+    });
+})
+
+  </script>
+
+{% endblock %}

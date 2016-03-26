@@ -1,0 +1,8 @@
+name: ymtx
+version: 1
+
+libraries:
+- name: numpy
+  version: "1.6.1"
+- name: mysql_connector_python
+  version: "2.0.4"

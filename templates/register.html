@@ -1,0 +1,85 @@
+{% extends '__base__.html' %}
+
+{% block title %}Register - {% endblock %}
+
+
+{% block content %}
+
+<div>
+  <div class="uk-alert uk-alert-danger uk-hidden"></div>
+  <form class="pure-form pure-form-stacked" id="form-register" v-on:submit="submit">
+  <fieldset>
+    <input v-model="name" type="text" maxlength="50" placeholder="name">
+    <input v-model="email" type="email" maxlength="50" placeholder="email" >
+    <input v-model="password1" type="password" maxlength="50" placeholder="set your password">
+    <input v-model="password2" type="password" maxlength="50" placeholder="confirm your password">
+    <button type="submit" class="pure-button pure-button-primary">Register</button>
+  </fieldset>
+  </form>
+</div>
+
+{% endblock %}
+
+
+{% block js %}
+  <script src="http://cdn.jsdelivr.net/vue/1.0.13/vue.min.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="/static/js/md5.js"></script>
+  <script src="/static/js/ymtx.js"></script>
+<!--  <script src="/static/js/vue.min.js"></script>
+  <script src="/static/js/jquery.min.js"></script>-->
+
+  <script>
+
+$(function () {
+    var vm = new Vue({
+        el: '#form-register',
+        data: {
+            name: '',
+            email: '',
+            password1: '',
+            password2: ''
+        },
+        methods: {
+            submit: function (event) {
+                event.preventDefault();
+                if (! this.name.trim()) {
+                    return showError('Name invalid')
+                }
+                if (! validateEmail(this.email.trim().toLowerCase())) {
+                    return showError('Email invalid')
+                }
+                if (this.password1.length < 6) {
+                    return showError('The length of the password is < 6')
+                }
+                if (this.password1 !== this.password2) {
+                    return showError('The password is not the same')
+                }
+                startLoading();
+                postApi('/api/users', {
+                    name: this.name,
+                    email: this.email.trim().toLowerCase(),
+                    password: CryptoJS.MD5(this.password1).toString(),
+                }, function (err, r) {
+                    if (err) {
+                        showError(err);
+                    }
+                    else {
+                        return location.assign('/');
+                    }
+                    stopLoading();
+                });
+            }
+        }
+    });
+});
+
+function validateEmail(email) {
+    var re = /^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$/;
+    return re.test(email.toLowerCase());
+}
+
+  </script>
+
+{% endblock %}
+
