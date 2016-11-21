@@ -9,11 +9,9 @@ except ImportError:
     from StringIO import StringIO
 
 # thread local object for storing request and response:
-
 ctx = threading.local()
 
 # Dict object:
-
 class Dict(dict):
 
     def __init__(self, names=(), values=(), **kw):
@@ -29,6 +27,7 @@ class Dict(dict):
 
     def __setattr__(self, key, value):
         self[key] = value
+
 
 _TIMEDELTA_ZERO = datetime.timedelta(0)
 
@@ -92,8 +91,8 @@ class UTC(datetime.tzinfo):
 
     __repr__ = __str__
 
-# all known response statues:
 
+# all known response statues:
 _RESPONSE_STATUSES = {
     # Informational
     100: 'Continue',
@@ -226,6 +225,7 @@ class HttpError(Exception):
 
     __repr__ = __str__
 
+
 class RedirectError(HttpError):
 
     def __init__(self, code, location):
@@ -237,32 +237,43 @@ class RedirectError(HttpError):
 
     __repr__ = __str__
 
+
+
 def badrequest():
     return HttpError(400)
+
 
 def unauthorized():
     return HttpError(401)
 
+
 def forbidden():
     return HttpError(403)
+
 
 def notfound():
     return HttpError(404)
 
+
 def conflict():
     return HttpError(409)
+
 
 def internalerror():
     return HttpError(500)
 
+
 def redirect(location):
     return RedirectError(301, location)
+
 
 def found(location):
     return RedirectError(302, location)
 
+
 def seeother(location):
     return RedirectError(303, location)
+
 
 def _to_str(s):
     if isinstance(s, str):
@@ -271,16 +282,20 @@ def _to_str(s):
         return s.encode('utf-8')
     return str(s)
 
+
 def _to_unicode(s, encoding='utf-8'):
     return s.decode(encoding)
+
 
 def _quote(s, encoding='utf-8'):
     if isinstance(s, unicode):
         s = s.encode(encoding)
     return urllib.quote(s)
 
+
 def _unquote(s, encoding='utf-8'):
     return urllib.unquote(s).decode(encoding)
+
 
 def get(path):
     def _decorator(func):
@@ -289,6 +304,7 @@ def get(path):
         return func
     return _decorator
 
+
 def post(path):
     def _decorator(func):
         func.__web_route__ = path
@@ -296,6 +312,8 @@ def post(path):
         return func
     return _decorator
 
+
+# 试图
 def view(path):
     def _decorator(func):
         @functools.wraps(func)
@@ -307,6 +325,7 @@ def view(path):
         return _wrapper
     return _decorator
 
+
 class Template(object):
 
     def __init__(self, template_name, **kw):
@@ -314,14 +333,13 @@ class Template(object):
         self.model = dict(**kw)
 
 
-
-
-
+# 拦截器
 def interceptor(pattern='/'):
     def _decorator(func):
         func.__interceptor__ = _build_pattern_fn(pattern)
         return func
     return _decorator
+
 
 def _build_pattern_fn(pattern):
     _RE_INTERCEPTROR_STARTS_WITH = re.compile(r'^([^\*\?]+)\*?$')
@@ -394,9 +412,6 @@ def _build_interceptor_fn(func, next):
     return _wrapper
 
 
-
-
-
 class MultipartFile(object):
     '''
     Multipart file storage get from request input.
@@ -409,7 +424,7 @@ class MultipartFile(object):
         self.filename = _to_unicode(storage.filename)
         self.file = storage.file
 
-
+# 请求上下文
 class Request(object):
 
     def __init__(self, environ):
@@ -616,6 +631,7 @@ class Request(object):
 UTC_0 = UTC('+00:00')
 
 
+#  响应. 状态，HEADER，cookies
 class Response(object):
 
     def __init__(self):
@@ -757,7 +773,7 @@ class Response(object):
 
 
 
-
+# 路由
 class Route(object):
 
     def __init__(self, func):
@@ -828,7 +844,6 @@ def _build_regex(path):
     return ''.join(re_list)
 
 
-
 class StaticFileRoute(object):
 
     def __init__(self):
@@ -849,8 +864,10 @@ class StaticFileRoute(object):
         ctx.response.content_type = mimetypes.types_map.get(fext.lower(), 'application/octet-stream')
         return _static_file_generator(fpath)
 
+
 def favicon_handler():
     return _static_file_generator('favicon.ico')
+
 
 def _static_file_generator(fpath):
     BLOCK_SIZE = 8192
@@ -859,8 +876,6 @@ def _static_file_generator(fpath):
         while block:
             yield block
             block = f.read(BLOCK_SIZE)
-
-
 
 
 def _default_error_handler(e, start_response, is_debug):
@@ -877,10 +892,11 @@ def _default_error_handler(e, start_response, is_debug):
     return ('<html><body><h1>500 Internal Server Error</h1><h3>%s</h3></body></html>' % str(e))
 
 
-
+# 支持模板引擎
 class TemplateEngine(object):
     def __call__(self, path, model):
         return '<!-- override this method to render template -->'
+
 
 class Jinja2TemplateEngine(TemplateEngine):
 
@@ -908,7 +924,7 @@ class Jinja2TemplateEngine(TemplateEngine):
         return self._env.get_template(path).render(**model).encode('utf-8')
 
 
-
+# 主类
 class WSGIApplication(object):
 
     def __init__(self, document_root=None, **kw):
@@ -924,7 +940,6 @@ class WSGIApplication(object):
         self._get_dynamic = []
         self._post_dynamic = []
 
-
     @property
     def template_engine(self):
         return self._template_engine
@@ -934,7 +949,6 @@ class WSGIApplication(object):
         if self._running:
             raise RuntimeError('Cannot modify WSGIApplication when running.')
         self._template_engine = engine
-
 
     def add_module(self, mod):
         if self._running:
@@ -971,12 +985,10 @@ class WSGIApplication(object):
                 self._post_static[route.path] = route
         logging.info('Add route: %s' % str(route))
 
-
     def add_interceptor(self, func):
         if self._running:
             raise RuntimeError('Cannot modify WSGIApplication when running.')
         self._interceptors.append(func)
-
 
     def run(self, port=9000, host='127.0.0.1'):
         from wsgiref.simple_server import make_server
