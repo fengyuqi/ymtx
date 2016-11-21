@@ -1,6 +1,0 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-import time,uuid
-
-from lib.orm import Model, StringField, BooleanField, FloatField, TextField
